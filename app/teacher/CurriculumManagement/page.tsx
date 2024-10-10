@@ -1,15 +1,29 @@
 'use client';
 
-import React, { useState, FormEvent } from 'react';
-import { Typography, TextField, Button, Paper, Box, Container, Snackbar } from '@mui/material';
+import React, { useState, FormEvent, useEffect } from 'react';
+import { Typography, TextField, Button, Paper, Box, Container, Snackbar, List, ListItem } from '@mui/material';
 import TeacherLayout from '../TeacherLayout';
-import { initializeChapter } from '@/app/utils/api';
+import { initializeChapter, getChapters } from '@/app/utils/api';
 
 export default function CurriculumManagement() {
   const [chapterName, setChapterName] = useState('');
   const [chapterContent, setChapterContent] = useState('');
   const [message, setMessage] = useState('');
   const [openSnackbar, setOpenSnackbar] = useState(false);
+  const [chapters, setChapters] = useState<string[]>([]);
+
+  useEffect(() => {
+    fetchChapters();
+  }, []);
+
+  const fetchChapters = async () => {
+    try {
+      const fetchedChapters = await getChapters();
+      setChapters(fetchedChapters.map(chapter => chapter.title));
+    } catch (error) {
+      console.error('Error fetching chapters:', error);
+    }
+  };
 
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -19,6 +33,7 @@ export default function CurriculumManagement() {
       setOpenSnackbar(true);
       setChapterName('');
       setChapterContent('');
+      await fetchChapters();  // Fetch updated chapters after successful upload
     } catch (error) {
       setMessage('Failed to initialize chapter. Please try again.');
       setOpenSnackbar(true);
@@ -65,6 +80,16 @@ export default function CurriculumManagement() {
               Upload Chapter
             </Button>
           </Box>
+        </Paper>
+        <Paper elevation={3} sx={{ p: 4, mt: 4 }}>
+          <Typography variant="h5" component="h2" gutterBottom>
+            Uploaded Chapters
+          </Typography>
+          <List>
+            {chapters.map((chapter, index) => (
+              <ListItem key={index}>{chapter}</ListItem>
+            ))}
+          </List>
         </Paper>
       </Container>
       <Snackbar

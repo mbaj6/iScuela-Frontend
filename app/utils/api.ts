@@ -30,6 +30,19 @@ interface ChapterResponse {
   // Add any other properties that the response includes
 }
 
+interface LessonPlanResponse {
+  lesson_plan: string;
+}
+
+interface DocumentResponse {
+  document_path: string;
+}
+
+interface Chapter {
+  id: number;
+  title: string;
+}
+
 function handleApiError(error: unknown, defaultMessage: string): never {
   if (typeof error === 'object' && error !== null && 'response' in error) {
     const errorResponse = error as ErrorResponse;
@@ -65,6 +78,59 @@ export const initializeChapter = async (chapterName: string, chapterContent: str
     return response.data;
   } catch (error) {
     console.error('Error initializing chapter:', error);
+    throw error;
+  }
+};
+
+export const getChapters = async (): Promise<{ id: number; title: string }[]> => {
+  try {
+    const response = await fetch(`${API_BASE_URL}/api/chapters`, {
+      method: 'GET',
+      credentials: 'include',
+    });
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+    const data = await response.json();
+    return data;
+  } catch (error) {
+    console.error('Error fetching chapters:', error);
+    return [];
+  }
+};
+
+export const generateLessonPlan = async (
+  chapter: string | null,
+  customTopic: string | null,
+  duration: number
+): Promise<LessonPlanResponse> => {
+  try {
+    const response = await api.post<LessonPlanResponse>('/api/generate-lesson-plan', {
+      chapter,
+      custom_topic: customTopic,
+      duration,
+    });
+    return response.data;
+  } catch (error) {
+    console.error('Error generating lesson plan:', error);
+    throw error;
+  }
+};
+
+export const generateDocument = async (
+  lessonPlan: string,
+  docType: 'pdf' | 'word',
+  chapterName: string
+): Promise<DocumentResponse> => {
+  try {
+    const response = await api.post<DocumentResponse>('/api/generate-document', {
+      lesson_plan: lessonPlan,
+      doc_type: docType,
+      chapter_name: chapterName,
+    });
+    return response.data;
+  } catch (error) {
+    console.error('Error generating document:', error);
     throw error;
   }
 };
