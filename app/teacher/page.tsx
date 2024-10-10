@@ -1,43 +1,18 @@
 'use client';
 
-import React, { useState } from 'react';
-import CurriculumManagement from './CurriculumManagement';
-import LessonPlanGenerator from './LessonPlanGenerator';
-import QuizGenerator from './QuizGenerator';
-import StudyMaterialGenerator from './StudyMaterialGenerator';
+import React from 'react';
+import { Typography } from '@mui/material';
+import TeacherLayout from './TeacherLayout';
 
 export default function TeacherDashboard() {
-  const [activeComponent, setActiveComponent] = useState('curriculum');
-
-  const renderComponent = () => {
-    switch (activeComponent) {
-      case 'curriculum':
-        return <CurriculumManagement />;
-      case 'lessonPlan':
-        return <LessonPlanGenerator />;
-      case 'quiz':
-        return <QuizGenerator />;
-      case 'studyMaterial':
-        return <StudyMaterialGenerator />;
-      default:
-        return <CurriculumManagement />;
-    }
-  };
-
   return (
-    <div style={{ display: 'flex' }}>
-      <div style={{ width: '200px', padding: '20px' }}>
-        <h2>Teacher Dashboard</h2>
-        <ul>
-          <li onClick={() => setActiveComponent('curriculum')}>Curriculum Management</li>
-          <li onClick={() => setActiveComponent('lessonPlan')}>Lesson Plan Generator</li>
-          <li onClick={() => setActiveComponent('quiz')}>Quiz Generator</li>
-          <li onClick={() => setActiveComponent('studyMaterial')}>Study Material Generator</li>
-        </ul>
-      </div>
-      <div style={{ flex: 1, padding: '20px' }}>
-        {renderComponent()}
-      </div>
-    </div>
+    <TeacherLayout>
+      <Typography variant="h4" component="h1" gutterBottom>
+        Teacher Dashboard
+      </Typography>
+      <Typography variant="body1">
+        Welcome to the teacher dashboard. Here you can manage your courses and students.
+      </Typography>
+    </TeacherLayout>
   );
 }

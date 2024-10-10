@@ -1,29 +1,29 @@
 'use client';
 
 import React, { useState } from 'react';
-import { api } from '../utils/api';
+import { initializeChapter } from '@/app/utils/api';
 
-export default function LessonPlanGenerator() {
+export default function QuizGenerator() {
   const [chapter, setChapter] = useState('');
   const [customTopic, setCustomTopic] = useState('');
-  const [duration, setDuration] = useState(60);
-  const [lessonPlan, setLessonPlan] = useState('');
+  const [numQuestions, setNumQuestions] = useState(5);
+  const [quizContent, setQuizContent] = useState('');
   const [message, setMessage] = useState('');
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      const result = await api.generateLessonPlan(chapter, customTopic, duration);
-      setLessonPlan(result.lesson_plan);
-      setMessage('Lesson plan generated successfully!');
+      const result = await api.generateQuiz(chapter, customTopic, numQuestions);
+      setQuizContent(result.quiz_content);
+      setMessage('Quiz generated successfully!');
     } catch (error) {
-      setMessage('Failed to generate lesson plan. Please try again.');
+      setMessage('Failed to generate quiz. Please try again.');
     }
   };
 
   return (
     <div>
-      <h2>Lesson Plan Generator</h2>
+      <h2>Quiz Generator</h2>
       <form onSubmit={handleSubmit}>
         <div>
           <label htmlFor="chapter">Chapter:</label>
@@ -44,22 +44,22 @@ export default function LessonPlanGenerator() {
           />
         </div>
         <div>
-          <label htmlFor="duration">Duration (minutes):</label>
+          <label htmlFor="numQuestions">Number of Questions:</label>
           <input
             type="number"
-            id="duration"
-            value={duration}
-            onChange={(e) => setDuration(Number(e.target.value))}
+            id="numQuestions"
+            value={numQuestions}
+            onChange={(e) => setNumQuestions(Number(e.target.value))}
             required
           />
         </div>
-        <button type="submit">Generate Lesson Plan</button>
+        <button type="submit">Generate Quiz</button>
       </form>
       {message && <p>{message}</p>}
-      {lessonPlan && (
+      {quizContent && (
         <div>
-          <h3>Generated Lesson Plan:</h3>
-          <pre>{lessonPlan}</pre>
+          <h3>Generated Quiz:</h3>
+          <pre>{quizContent}</pre>
         </div>
       )}
     </div>

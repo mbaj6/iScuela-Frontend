@@ -1,59 +1,66 @@
 'use client'
 
-import React, { createContext, useContext, useState, useEffect } from 'react';
-import { login as apiLogin, register as apiRegister } from '../utils/api';
+import React, { createContext, useContext, useState, ReactNode } from 'react';
+import { loginUser as apiLogin, registerUser as apiRegister } from '../utils/api';
 
 interface User {
-	token: string;
-	role: 'teacher' | 'student';
-	// Add other user properties as needed
+	username: string;
+	userType: 'teacher' | 'student';
 }
 
 interface AuthContextType {
 	user: User | null;
-	login: (username: string, password: string) => Promise<void>;
-	register: (username: string, password: string, userType: string) => Promise<void>;
+	token: string | null;
+	login: (username: string, password: string) => Promise<User>;
+	register: (username: string, password: string, userType: 'teacher' | 'student') => Promise<void>;
 	logout: () => void;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-export function AuthProvider({ children }: { children: React.ReactNode }) {
+export function AuthProvider({ children }: { children: ReactNode }) {
 	const [user, setUser] = useState<User | null>(null);
+	const [token, setToken] = useState<string | null>(null);
 
-	useEffect(() => {
-		// Check if user is logged in on initial load
-		const token = localStorage.getItem('token');
-		if (token) {
-			// You might want to validate the token here
-			setUser({ token, role: 'teacher' }); // Or fetch user details including role
+	const login = async (username: string, password: string): Promise<User> => {
+		try {
+			const response = await apiLogin(username, password);
+			console.log('Login response in AuthContext:', response);
+			if (response.role) {
+				const user = { username, userType: response.role as 'teacher' | 'student' };
+				setUser(user);
+				setToken(response.access_token);
+				return user;
+				}
+			else {
+				console.error('User role not found in login response');
+				throw new Error('Unable to determine user role');
+			}
+		} catch (error) {
+			console.error('Login error:', error);
+			throw error;
 		}
-	}, []);
-
-	const login = async (username: string, password: string) => {
-		const data = await apiLogin(username, password);
-		const userData: User = {
-			token: data.access_token,
-			role: data.role, // Ensure your API returns a role
-			// Add other user properties as needed
-		};
-		setUser(userData);
-		localStorage.setItem('token', data.access_token);
 	};
 
-	const register = async (username: string, password: string, userType: string) => {
-		await apiRegister(username, password, userType);
-		// You might want to automatically log in the user after registration
-		await login(username, password);
+	const register = async (username: string, password: string, userType: 'teacher' | 'student') => {
+		try {
+			await apiRegister(username, password, userType);
+			// Note: We don't set the user or token here because we typically want the user to log in after registration
+		} catch (error) {
+			console.error('Registration error:', error);
+			throw error;
+		}
 	};
 
 	const logout = () => {
 		setUser(null);
+		setToken(null);
+		// You might want to clear the token from localStorage here as well
 		localStorage.removeItem('token');
 	};
 
 	return (
-		<AuthContext.Provider value={{ user, login, register, logout }}>
+		<AuthContext.Provider value={{ user, token, login, register, logout }}>
 			{children}
 		</AuthContext.Provider>
 	);

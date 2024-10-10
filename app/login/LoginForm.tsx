@@ -1,43 +1,75 @@
 'use client';
 
 import React, { useState, FormEvent } from 'react';
-import { login } from '../utils/api';
+import { useAuth } from '../contexts/AuthContext';
+import { useRouter } from 'next/navigation';
+import { TextField, Button, Typography, Box } from '@mui/material';
 
 export default function LoginForm() {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [message, setMessage] = useState('');
+  const { login } = useAuth();
+  const router = useRouter();
 
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     try {
-      const response = await login(username, password);
-      setMessage(response.message || 'Login successful');
-      // Here you might want to redirect the user or update the app state
+      const user = await login(username, password);
+      setMessage('Login successful');
+      // Redirect based on user type
+      if (user.userType === 'teacher') {
+        router.push('/teacher');
+      } else if (user.userType === 'student') {
+        router.push('/student');
+      } else {
+        setMessage('Login successful, but unable to determine user type');
+      }
     } catch (error) {
       console.error('Login error:', error);
-      setMessage('Login failed. Please try again.');
+      setMessage(error instanceof Error ? error.message : 'Login failed. Please try again.');
     }
   };
 
   return (
-    <form onSubmit={handleSubmit}>
-      <input
-        type="text"
+    <Box component="form" onSubmit={handleSubmit} noValidate sx={{ mt: 1 }}>
+      <TextField
+        margin="normal"
+        required
+        fullWidth
+        id="username"
+        label="Username"
+        name="username"
+        autoComplete="username"
+        autoFocus
         value={username}
         onChange={(e) => setUsername(e.target.value)}
-        placeholder="Username"
-        required
       />
-      <input
+      <TextField
+        margin="normal"
+        required
+        fullWidth
+        name="password"
+        label="Password"
         type="password"
+        id="password"
+        autoComplete="current-password"
         value={password}
         onChange={(e) => setPassword(e.target.value)}
-        placeholder="Password"
-        required
       />
-      <button type="submit">Login</button>
-      {message && <p>{message}</p>}
-    </form>
+      <Button
+        type="submit"
+        fullWidth
+        variant="contained"
+        sx={{ mt: 3, mb: 2 }}
+      >
+        Login
+      </Button>
+      {message && (
+        <Typography color={message.includes('failed') ? 'error' : 'primary'} align="center">
+          {message}
+        </Typography>
+      )}
+    </Box>
   );
 }
