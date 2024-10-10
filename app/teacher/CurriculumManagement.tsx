@@ -1,24 +1,23 @@
 'use client';
 
-import React, { useState } from 'react';
-import { api } from '../utils/api';
+import React, { useState, FormEvent } from 'react';
+import { initializeChapter } from '../utils/api';
 
 export default function CurriculumManagement() {
   const [chapterName, setChapterName] = useState('');
   const [chapterContent, setChapterContent] = useState('');
   const [message, setMessage] = useState('');
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    setMessage('');
     try {
-      const result = await api.uploadChapter(chapterName, chapterContent);
-      setMessage(result.message);
+      const response = await initializeChapter(chapterName, chapterContent);
+      setMessage(response.message);
       setChapterName('');
       setChapterContent('');
     } catch (error) {
+      setMessage('Failed to initialize chapter. Please try again.');
       console.error('Error:', error);
-      setMessage('Failed to upload chapter. Please try again.');
     }
   };
 

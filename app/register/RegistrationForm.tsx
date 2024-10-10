@@ -1,61 +1,50 @@
 'use client'
 
-import { useState } from 'react'
-import { useRouter } from 'next/navigation'
-import { register } from '@/app/utils/api'
-import styles from '@/styles/RegistrationForm.module.css'
+import React, { useState, FormEvent } from 'react';
+import { register } from '../utils/api';
 
 export default function RegistrationForm() {
-  const [username, setUsername] = useState('')
-  const [password, setPassword] = useState('')
-  const [userType, setUserType] = useState('student')
-  const router = useRouter()
+  const [username, setUsername] = useState('');
+  const [password, setPassword] = useState('');
+  const [userType, setUserType] = useState('student');
+  const [message, setMessage] = useState('');
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
+  const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
     try {
-      await register(username, password, userType)
-      router.push('/login')
+      const response = await register(username, password, userType);
+      setMessage(response.message || 'Registration successful');
+      // Clear form fields after successful registration
+      setUsername('');
+      setPassword('');
     } catch (error) {
-      console.error('Registration failed:', error)
+      console.error('Registration error:', error);
+      setMessage('Registration failed. Please try again.');
     }
-  }
+  };
 
   return (
-    <form onSubmit={handleSubmit} className={styles.form}>
-      <h2>Register</h2>
-      <div className={styles.formGroup}>
-        <label htmlFor="username">Username</label>
-        <input
-          id="username"
-          type="text"
-          value={username}
-          onChange={(e) => setUsername(e.target.value)}
-          required
-        />
-      </div>
-      <div className={styles.formGroup}>
-        <label htmlFor="password">Password</label>
-        <input
-          id="password"
-          type="password"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          required
-        />
-      </div>
-      <div className={styles.formGroup}>
-        <label htmlFor="userType">User Type</label>
-        <select
-          id="userType"
-          value={userType}
-          onChange={(e) => setUserType(e.target.value)}
-        >
-          <option value="student">Student</option>
-          <option value="teacher">Teacher</option>
-        </select>
-      </div>
-      <button type="submit" className={styles.submitButton}>Register</button>
+    <form onSubmit={handleSubmit}>
+      <input
+        type="text"
+        value={username}
+        onChange={(e) => setUsername(e.target.value)}
+        placeholder="Username"
+        required
+      />
+      <input
+        type="password"
+        value={password}
+        onChange={(e) => setPassword(e.target.value)}
+        placeholder="Password"
+        required
+      />
+      <select value={userType} onChange={(e) => setUserType(e.target.value)}>
+        <option value="student">Student</option>
+        <option value="teacher">Teacher</option>
+      </select>
+      <button type="submit">Register</button>
+      {message && <p>{message}</p>}
     </form>
-  )
+  );
 }
