@@ -1,10 +1,17 @@
-import React from 'react';
+'use client';
 
-export default function StudentPage() {
+import React from 'react';
+import { Typography } from '@mui/material';
+import { withAuth } from '@/app/contexts/AuthContext';
+import StudentLayout from './StudentLayout';
+
+const StudentDashboard: React.FC = () => {
   return (
-    <div>
-      <h1>Student Dashboard</h1>
-      {/* Add your student dashboard content here */}
-    </div>
+    <StudentLayout>
+      <Typography variant="h4" gutterBottom>Welcome to Your Student Dashboard</Typography>
+      {/* Add more dashboard content here */}
+    </StudentLayout>
   );
-}
+};
+
+export default withAuth(StudentDashboard);

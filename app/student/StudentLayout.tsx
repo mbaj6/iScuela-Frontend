@@ -6,29 +6,29 @@ import { useRouter } from 'next/navigation';
 import LogoutButton from '@/app/components/LogoutButton';
 import { 
   Dashboard as DashboardIcon,
-  School as SchoolIcon,
   Book as BookIcon,
   Quiz as QuizIcon,
-  Note as NoteIcon,
-  // Add more icons as needed
+  QuestionAnswer as QuestionIcon,
+  NoteAlt as LectureNotesIcon,
+  Help as HelpIcon
 } from '@mui/icons-material';
 
-interface TeacherLayoutProps {
+interface StudentLayoutProps {
   children: React.ReactNode;
 }
 
 const drawerWidth = 240;
 
-const TeacherLayout: React.FC<TeacherLayoutProps> = ({ children }) => {
+const StudentLayout: React.FC<StudentLayoutProps> = ({ children }) => {
   const router = useRouter();
 
   const menuItems = [
-    { text: 'Dashboard', icon: <DashboardIcon />, path: '/teacher' },
-    { text: 'Curriculum Management', icon: <SchoolIcon />, path: '/teacher/CurriculumManagement' },
-    { text: 'Lesson Plan Generator', icon: <BookIcon />, path: '/teacher/LessonPlanGenerator' },
-    { text: 'Quiz Generator', icon: <QuizIcon />, path: '/teacher/QuizGenerator' },
-    { text: 'Study Material Generator', icon: <NoteIcon />, path: '/teacher/StudyMaterialGenerator' },
-    // Add more menu items as needed
+    { text: 'Dashboard', icon: <DashboardIcon />, path: '/student' },
+    { text: 'Study Materials', icon: <BookIcon />, path: '/student/study-materials' },
+    { text: 'Take Quiz', icon: <QuizIcon />, path: '/student/take-quiz' },
+    { text: 'Ask for Guidance', icon: <HelpIcon />, path: '/student/ask-guidance' },
+    { text: 'Ask Any Question', icon: <QuestionIcon />, path: '/student/ask-question' },
+    { text: 'Lecture Notes', icon: <LectureNotesIcon />, path: '/student/lecture-notes' },
   ];
 
   return (
@@ -36,7 +36,7 @@ const TeacherLayout: React.FC<TeacherLayoutProps> = ({ children }) => {
       <AppBar position="fixed" sx={{ zIndex: (theme) => theme.zIndex.drawer + 1 }}>
         <Toolbar>
           <Typography variant="h6" component="div" sx={{ flexGrow: 1 }}>
-            Teacher Dashboard
+            Student Dashboard
           </Typography>
           <LogoutButton />
         </Toolbar>
@@ -73,4 +73,5 @@ const TeacherLayout: React.FC<TeacherLayoutProps> = ({ children }) => {
   );
 };
 
-export default TeacherLayout;
+export default StudentLayout;
+

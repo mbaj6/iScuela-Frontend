@@ -1,33 +1,32 @@
 'use client';
 
-import React, { useState, FormEvent } from 'react';
-import { useAuth } from '../contexts/AuthContext';
-import { useRouter } from 'next/navigation';
+import React, { useState } from 'react';
 import { TextField, Button, Typography, Box } from '@mui/material';
+import { useRouter } from 'next/navigation';
+import { login } from '@/app/utils/api';
+import { useAuth } from '@/app/contexts/AuthContext';
 
-export default function LoginForm() {
+const LoginForm: React.FC = () => {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
-  const [message, setMessage] = useState('');
-  const { login } = useAuth();
+  const [error, setError] = useState('');
   const router = useRouter();
+  const { setUser } = useAuth();
 
-  const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      const user = await login(username, password);
-      setMessage('Login successful');
-      // Redirect based on user type
-      if (user.userType === 'teacher') {
-        router.push('/teacher');
-      } else if (user.userType === 'student') {
-        router.push('/student');
-      } else {
-        setMessage('Login successful, but unable to determine user type');
+      const response = await login(username, password);
+      setUser({ token: response.access_token, role: response.role });
+      // Redirect based on role
+      if (response.role === 'teacher') {
+        router.push('/teacher');  // Changed from '/teacher/dashboard' to '/teacher'
+      } else if (response.role === 'student') {
+        router.push('/student');  // Assuming you have a student page as well
       }
     } catch (error) {
+      setError('Invalid username or password');
       console.error('Login error:', error);
-      setMessage(error instanceof Error ? error.message : 'Login failed. Please try again.');
     }
   };
 
@@ -63,13 +62,15 @@ export default function LoginForm() {
         variant="contained"
         sx={{ mt: 3, mb: 2 }}
       >
-        Login
+        Sign In
       </Button>
-      {message && (
-        <Typography color={message.includes('failed') ? 'error' : 'primary'} align="center">
-          {message}
+      {error && (
+        <Typography color="error" align="center">
+          {error}
         </Typography>
       )}
     </Box>
   );
-}
+};
+
+export default LoginForm;

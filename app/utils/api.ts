@@ -92,6 +92,7 @@ export const getChapters = async (): Promise<{ id: number; title: string }[]> =>
       throw new Error(`HTTP error! status: ${response.status}`);
     }
     const data = await response.json();
+    console.log("API response for chapters:", data);  // Add this line
     return data;
   } catch (error) {
     console.error('Error fetching chapters:', error);
@@ -99,18 +100,23 @@ export const getChapters = async (): Promise<{ id: number; title: string }[]> =>
   }
 };
 
-export const generateLessonPlan = async (
-  chapter: string | null,
-  customTopic: string | null,
-  duration: number
-): Promise<LessonPlanResponse> => {
+export const generateLessonPlan = async (chapter: string, customTopic: string, duration: number): Promise<LessonPlanResponse> => {
   try {
-    const response = await api.post<LessonPlanResponse>('/api/generate-lesson-plan', {
-      chapter,
-      custom_topic: customTopic,
-      duration,
+    const response = await fetch(`${API_BASE_URL}/api/generate-lesson-plan`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ chapter, custom_topic: customTopic, duration }),
     });
-    return response.data;
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+    const data = await response.json();
+    if (typeof data.lesson_plan !== 'string') {
+      throw new Error('Unexpected response format');
+    }
+    return data;
   } catch (error) {
     console.error('Error generating lesson plan:', error);
     throw error;
@@ -133,6 +139,186 @@ export const generateDocument = async (
     console.error('Error generating document:', error);
     throw error;
   }
+};
+
+export const exportLessonPlan = async (lessonPlan: string, format: 'docx' | 'pdf'): Promise<Response> => {
+  try {
+    const response = await fetch(`${API_BASE_URL}/api/export-lesson-plan/${format}`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ lesson_plan: lessonPlan }),
+    });
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+    return response;
+  } catch (error) {
+    console.error('Error exporting lesson plan:', error);
+    throw error;
+  }
+};
+
+export const generateQuiz = async (chapter: string, customTopic: string, numQuestions: number, gradeLevel: string): Promise<{ quiz_content: string }> => {
+  try {
+    const response = await fetch(`${API_BASE_URL}/api/generate-quiz`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ chapter, custom_topic: customTopic, num_questions: numQuestions, grade_level: gradeLevel }),
+    });
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+    return await response.json();
+  } catch (error) {
+    console.error('Error generating quiz:', error);
+    throw error;
+  }
+};
+
+export const exportQuiz = async (quizContent: string, format: 'docx' | 'pdf'): Promise<Response> => {
+  try {
+    const response = await fetch(`${API_BASE_URL}/api/export-quiz/${format}`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ quiz_content: quizContent }),
+    });
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+    return response;
+  } catch (error) {
+    console.error('Error exporting quiz:', error);
+    throw error;
+  }
+};
+
+export const generateStudyMaterial = async (chapter: string, customTopic: string, materialType: string): Promise<{ study_material: string }> => {
+  try {
+    const response = await fetch(`${API_BASE_URL}/api/generate-study-material`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ chapter, custom_topic: customTopic, material_type: materialType }),
+    });
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+    return await response.json();
+  } catch (error) {
+    console.error('Error generating study material:', error);
+    throw error;
+  }
+};
+
+export const shareStudyMaterial = async (studyMaterial: string): Promise<{ message: string }> => {
+  try {
+    const response = await fetch(`${API_BASE_URL}/api/share-study-material`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ study_material: studyMaterial }),
+    });
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+    return await response.json();
+  } catch (error) {
+    console.error('Error sharing study material:', error);
+    throw error;
+  }
+};
+
+export const logout = async (): Promise<void> => {
+  try {
+    const response = await fetch(`${API_BASE_URL}/logout`, {
+      method: 'POST',
+      credentials: 'include',
+    });
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+  } catch (error) {
+    console.error('Error logging out:', error);
+    throw error;
+  }
+};
+
+export const login = async (username: string, password: string): Promise<{ access_token: string; role: string }> => {
+  try {
+    const response = await fetch(`${API_BASE_URL}/login`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ username, password }),
+    });
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+    return await response.json();
+  } catch (error) {
+    console.error('Login error:', error);
+    throw error;
+  }
+};
+
+export const generateLectureNotes = async (file: File | null, videoUrl?: string): Promise<{ notes: string }> => {
+  const formData = new FormData();
+  if (file) {
+    formData.append('file', file);
+  } else if (videoUrl) {
+    formData.append('video_url', videoUrl);
+  }
+
+  const response = await fetch(`${API_BASE_URL}/api/generate-lecture-notes`, {
+    method: 'POST',
+    body: formData,
+  });
+
+  if (!response.ok) {
+    throw new Error(`HTTP error! status: ${response.status}`);
+  }
+
+  return await response.json();
+};
+
+export const generateMCQs = async (notes: string, numQuestions: number): Promise<{ mcqs: string }> => {
+  const response = await fetch(`${API_BASE_URL}/api/generate-mcqs`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ notes, num_questions: numQuestions }),
+  });
+
+  if (!response.ok) {
+    throw new Error(`HTTP error! status: ${response.status}`);
+  }
+
+  return await response.json();
+};
+
+export const getStudyMaterials = async (): Promise<StudyMaterial[]> => {
+  const response = await fetch(`${API_BASE_URL}/api/study-materials`, {
+    method: 'GET',
+    headers: {
+      'Authorization': `Bearer ${localStorage.getItem('token')}`,
+    },
+  });
+
+  if (!response.ok) {
+    throw new Error(`HTTP error! status: ${response.status}`);
+  }
+
+  return await response.json();
 };
 
 // ... any other API functions you need

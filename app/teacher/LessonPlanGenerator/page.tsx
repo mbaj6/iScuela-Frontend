@@ -1,93 +1,94 @@
 'use client';
 
-import React, { useState, useEffect, FormEvent } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
+  Typography,
   TextField,
   Button,
-  Box,
-  Typography,
-  CircularProgress,
-  Snackbar,
-  Container,
   Paper,
+  Box,
+  Container,
+  Snackbar,
   Select,
   MenuItem,
   FormControl,
   InputLabel,
-  RadioGroup,
-  FormControlLabel,
-  Radio,
 } from '@mui/material';
 import TeacherLayout from '../TeacherLayout';
-import { getChapters, generateLessonPlan, generateDocument } from '@/app/utils/api';
+import { generateLessonPlan, getChapters, exportLessonPlan } from '@/app/utils/api';
+
+interface LessonPlanResponse {
+  lesson_plan: string;
+}
 
 export default function LessonPlanGenerator() {
-  const [chapters, setChapters] = useState<{ id: number; title: string }[]>([]);
-  const [selectedChapter, setSelectedChapter] = useState('');
+  const [chapter, setChapter] = useState('');
   const [customTopic, setCustomTopic] = useState('');
   const [duration, setDuration] = useState('');
-  const [lessonPlan, setLessonPlan] = useState('');
-  const [docType, setDocType] = useState<'pdf' | 'word'>('pdf');
-  const [loading, setLoading] = useState(false);
+  const [lessonPlan, setLessonPlan] = useState<string | null>(null);
   const [message, setMessage] = useState('');
   const [openSnackbar, setOpenSnackbar] = useState(false);
-  const [documentPath, setDocumentPath] = useState('');
+  const [chapters, setChapters] = useState<{ id: number; title: string }[]>([]);
 
   useEffect(() => {
-    const fetchChapters = async () => {
-      try {
-        const fetchedChapters = await getChapters();
-        setChapters(fetchedChapters);
-      } catch (error) {
-        console.error('Error fetching chapters:', error);
-        setMessage('Failed to fetch chapters. Using default list.');
-        setOpenSnackbar(true);
-      }
-    };
-
     fetchChapters();
   }, []);
 
-  const handleGenerateLessonPlan = async (e: FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    setLoading(true);
+  const fetchChapters = async () => {
     try {
-      const response = await generateLessonPlan(
-        selectedChapter || null,
-        customTopic || null,
-        parseInt(duration)
-      );
+      const fetchedChapters = await getChapters();
+      setChapters(fetchedChapters);
+    } catch (error) {
+      console.error('Error fetching chapters:', error);
+    }
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    try {
+      const response = await generateLessonPlan(chapter, customTopic, parseInt(duration));
       setLessonPlan(response.lesson_plan);
       setMessage('Lesson plan generated successfully!');
       setOpenSnackbar(true);
     } catch (error) {
-      console.error('Error generating lesson plan:', error);
-      setMessage('Failed to generate lesson plan. Please check the server logs for more details.');
+      setMessage('Failed to generate lesson plan. Please try again.');
       setOpenSnackbar(true);
-    } finally {
-      setLoading(false);
+      console.error('Error:', error);
     }
   };
 
-  const handleGenerateDocument = async () => {
-    if (!lessonPlan) {
-      setMessage('Please generate a lesson plan first.');
-      setOpenSnackbar(true);
-      return;
-    }
-    setLoading(true);
+  const handleExport = async (format: 'docx' | 'pdf') => {
     try {
-      const response = await generateDocument(lessonPlan, docType, selectedChapter || customTopic);
-      setDocumentPath(response.document_path);
-      setMessage(`Document generated successfully! Path: ${response.document_path}`);
-      setOpenSnackbar(true);
-    } catch (error) {
-      setMessage('Failed to generate document. Please try again.');
-      setOpenSnackbar(true);
+      if (!lessonPlan) {
+        throw new Error('No lesson plan to export');
+      }
+      console.log('Lesson Plan:', typeof lessonPlan, lessonPlan);
+      const response = await exportLessonPlan(lessonPlan, format);
+      
+      // Check if the response is JSON (error message) or a blob (file)
+      const contentType = response.headers.get("content-type");
+      if (contentType && contentType.indexOf("application/json") !== -1) {
+        // It's an error message
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Unknown error occurred');
+      } else {
+        // It's a file
+        const blob = await response.blob();
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `lesson_plan.${format}`;
+        document.body.appendChild(a);
+        a.click();
+        window.URL.revokeObjectURL(url);
+        setMessage(`Lesson plan exported as ${format.toUpperCase()} successfully!`);
+      }
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred';
+      setMessage(`Failed to export lesson plan as ${format.toUpperCase()}. ${errorMessage}`);
       console.error('Error:', error);
-    } finally {
-      setLoading(false);
     }
+    setOpenSnackbar(true);
   };
 
   return (
@@ -97,98 +98,63 @@ export default function LessonPlanGenerator() {
           <Typography variant="h4" component="h1" gutterBottom>
             Lesson Plan Generator
           </Typography>
-          <Box component="form" onSubmit={handleGenerateLessonPlan} noValidate sx={{ mt: 3 }}>
-            <FormControl fullWidth margin="normal">
-              <InputLabel id="chapter-select-label">Select Chapter</InputLabel>
+          <Box component="form" onSubmit={handleSubmit} noValidate sx={{ mt: 3 }}>
+            <FormControl fullWidth sx={{ mb: 2 }}>
+              <InputLabel id="chapter-select-label">Chapter</InputLabel>
               <Select
                 labelId="chapter-select-label"
-                id="chapter-select"
-                value={selectedChapter}
-                label="Select Chapter"
-                onChange={(e) => setSelectedChapter(e.target.value)}
+                value={chapter}
+                onChange={(e) => setChapter(e.target.value)}
+                label="Chapter"
               >
-                {chapters.map((chapter) => (
-                  <MenuItem key={chapter.id} value={chapter.title}>
-                    {chapter.title}
-                  </MenuItem>
+                {chapters.map((chap) => (
+                  <MenuItem key={chap.id} value={chap.title}>{chap.title}</MenuItem>
                 ))}
               </Select>
             </FormControl>
             <TextField
-              margin="normal"
               fullWidth
-              id="custom-topic"
-              label="Or Enter Custom Topic"
-              name="custom-topic"
+              label="Custom Topic"
               value={customTopic}
               onChange={(e) => setCustomTopic(e.target.value)}
+              sx={{ mb: 2 }}
             />
             <TextField
-              margin="normal"
-              required
               fullWidth
-              id="duration"
               label="Duration (minutes)"
-              name="duration"
               type="number"
               value={duration}
               onChange={(e) => setDuration(e.target.value)}
+              sx={{ mb: 2 }}
             />
-            <Button
-              type="submit"
-              fullWidth
-              variant="contained"
-              sx={{ mt: 3, mb: 2 }}
-              disabled={loading}
-            >
-              {loading ? <CircularProgress size={24} /> : 'Generate Lesson Plan'}
+            <Button type="submit" variant="contained" color="primary">
+              Generate Lesson Plan
             </Button>
           </Box>
-          {lessonPlan && (
-            <Box mt={4}>
-              <Typography variant="h6" gutterBottom>
-                Generated Lesson Plan:
-              </Typography>
-              <TextField
-                fullWidth
-                multiline
-                rows={10}
-                value={lessonPlan}
-                variant="outlined"
-                InputProps={{ readOnly: true }}
-              />
-              <FormControl component="fieldset" sx={{ mt: 3 }}>
-                <Typography variant="subtitle1" gutterBottom>
-                  Document Type
-                </Typography>
-                <RadioGroup
-                  row
-                  value={docType}
-                  onChange={(e) => setDocType(e.target.value as 'pdf' | 'word')}
-                >
-                  <FormControlLabel value="pdf" control={<Radio />} label="PDF" />
-                  <FormControlLabel value="word" control={<Radio />} label="Word" />
-                </RadioGroup>
-              </FormControl>
-              <Button
-                fullWidth
-                variant="contained"
-                sx={{ mt: 3 }}
-                onClick={handleGenerateDocument}
-                disabled={loading}
-              >
-                {loading ? <CircularProgress size={24} /> : 'Generate Document'}
+        </Paper>
+        {lessonPlan && (
+          <Paper elevation={3} sx={{ p: 4, mt: 4 }}>
+            <Typography variant="h5" component="h2" gutterBottom>
+              Generated Lesson Plan
+            </Typography>
+            <TextField
+              fullWidth
+              multiline
+              rows={10}
+              value={lessonPlan}
+              onChange={(e) => setLessonPlan(e.target.value)}
+              sx={{ mb: 2 }}
+            />
+            <Box sx={{ mt: 2 }}>
+              <Button onClick={() => handleExport('docx')} variant="contained" color="secondary" sx={{ mr: 2 }}>
+                Export as Word
+              </Button>
+              <Button onClick={() => handleExport('pdf')} variant="contained" color="secondary">
+                Export as PDF
               </Button>
             </Box>
-          )}
-          {documentPath && (
-            <Box mt={4}>
-              <Typography variant="body1">
-                Document generated: {documentPath}
-              </Typography>
-            </Box>
-          )}
-        </Paper>
+          </Paper>
+        )}
       </Container>
       <Snackbar
         open={openSnackbar}

@@ -2,17 +2,18 @@
 
 import React from 'react';
 import { Typography } from '@mui/material';
+import { withAuth } from '@/app/contexts/AuthContext';
 import TeacherLayout from './TeacherLayout';
 
-export default function TeacherDashboard() {
+const TeacherDashboard: React.FC = () => {
   return (
     <TeacherLayout>
       <Typography variant="h4" component="h1" gutterBottom>
-        Teacher Dashboard
+        Welcome to Teacher Dashboard
       </Typography>
-      <Typography variant="body1">
-        Welcome to the teacher dashboard. Here you can manage your courses and students.
-      </Typography>
+      {/* Add more dashboard content here */}
     </TeacherLayout>
   );
-}
+};
+
+export default withAuth(TeacherDashboard);
