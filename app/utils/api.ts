@@ -1,10 +1,11 @@
+"use client";
+import { StudyMaterial } from '@/types';
 import axios from 'axios';
 
-export const API_BASE_URL = 'http://localhost:5001';
+export const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5001';
 
 const api = axios.create({
   baseURL: API_BASE_URL,
-  withCredentials: true,
 });
 
 interface LoginResponse {
@@ -41,6 +42,10 @@ interface DocumentResponse {
 interface Chapter {
   id: number;
   title: string;
+}
+
+interface AskQuestionResponse {
+  answer: string;
 }
 
 function handleApiError(error: unknown, defaultMessage: string): never {
@@ -84,16 +89,8 @@ export const initializeChapter = async (chapterName: string, chapterContent: str
 
 export const getChapters = async (): Promise<{ id: number; title: string }[]> => {
   try {
-    const response = await fetch(`${API_BASE_URL}/api/chapters`, {
-      method: 'GET',
-      credentials: 'include',
-    });
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
-    }
-    const data = await response.json();
-    console.log("API response for chapters:", data);  // Add this line
-    return data;
+    const response = await api.get<{ id: number; title: string }[]>('/api/chapters');
+    return response.data;
   } catch (error) {
     console.error('Error fetching chapters:', error);
     return [];
@@ -160,19 +157,18 @@ export const exportLessonPlan = async (lessonPlan: string, format: 'docx' | 'pdf
   }
 };
 
-export const generateQuiz = async (chapter: string, customTopic: string, numQuestions: number, gradeLevel: string): Promise<{ quiz_content: string }> => {
+export const generateQuiz = async (
+  params: {
+    text?: string;
+    chapter?: string;
+    customTopic?: string;
+    numQuestions?: number;
+    gradeLevel?: string;
+  }
+): Promise<any> => {
   try {
-    const response = await fetch(`${API_BASE_URL}/api/generate-quiz`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ chapter, custom_topic: customTopic, num_questions: numQuestions, grade_level: gradeLevel }),
-    });
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
-    }
-    return await response.json();
+    const response = await api.post('/api/generate-quiz', params);
+    return response.data;
   } catch (error) {
     console.error('Error generating quiz:', error);
     throw error;
@@ -259,11 +255,15 @@ export const login = async (username: string, password: string): Promise<{ acces
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({ username, password }),
+      credentials: 'include',
     });
     if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
+      const errorData = await response.json();
+      throw new Error(errorData.message || `HTTP error! status: ${response.status}`);
     }
-    return await response.json();
+    const data = await response.json();
+    setToken(data.access_token);
+    return data;
   } catch (error) {
     console.error('Login error:', error);
     throw error;
@@ -322,3 +322,91 @@ export const getStudyMaterials = async (): Promise<StudyMaterial[]> => {
 };
 
 // ... any other API functions you need
+
+export const setToken = (token: string) => {
+  localStorage.setItem('token', token);
+};
+
+export const getToken = () => {
+  return localStorage.getItem('token');
+};
+
+export const removeToken = () => {
+  localStorage.removeItem('token');
+};
+
+export const askAnyQuestion = async (chapter: string, question: string): Promise<any> => {
+  try {
+    const response = await api.post('/api/ask-any-question', { chapter, question });
+    return response.data;
+  } catch (error) {
+    console.error('Error asking question:', error);
+    throw error;
+  }
+};
+
+export const askForGuidance = async (topic: string, question: string): Promise<any> => {
+  try {
+    const response = await api.post('/api/ask-for-guidance', { topic, question });
+    return response.data;
+  } catch (error) {
+    console.error('Error asking for guidance:', error);
+    throw error;
+  }
+};
+
+export const takeQuiz = async (
+  chapter: string,
+  customTopic: string,
+  numQuestions: number,
+  gradeLevel?: string
+): Promise<any> => {
+  try {
+    const response = await api.post('/api/take-quiz', {
+      chapter,
+      custom_topic: customTopic,
+      num_questions: numQuestions,
+      grade_level: gradeLevel,
+    });
+    return response.data;
+  } catch (error) {
+    console.error('Error taking quiz:', error);
+    throw error;
+  }
+};
+
+interface CustomAxiosError extends Error {
+  isAxiosError: boolean;
+  response?: {
+    data?: any;
+    status?: number;
+    headers?: Record<string, string>;
+  };
+  request?: any;
+  config?: any;
+}
+
+function isAxiosError(error: any): error is CustomAxiosError {
+  return error && error.isAxiosError === true;
+}
+
+export const uploadLecture = async (data: FormData | { video_url: string }): Promise<any> => {
+  try {
+    console.log("Uploading lecture with data:", data);
+    const response = await api.post('/api/upload-lecture', data, {
+      headers: {
+        'Content-Type': data instanceof FormData ? 'multipart/form-data' : 'application/json',
+      },
+    });
+    console.log("Upload response:", response.data);
+    return response.data;
+  } catch (error: unknown) {
+    console.error('Error uploading lecture:', error);
+    if (isAxiosError(error) && error.response) {
+      console.error('Response data:', error.response.data);
+      throw new Error(error.response.data.error || 'An error occurred during upload');
+    } else {
+      throw new Error('An unexpected error occurred');
+    }
+  }
+};

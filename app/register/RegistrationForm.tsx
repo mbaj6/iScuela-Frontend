@@ -12,7 +12,7 @@ export default function RegisterForm() {
   const [message, setMessage] = useState('');
   const router = useRouter();
 
-  const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     try {
       const response = await registerUser(username, password, userType);

@@ -3,7 +3,7 @@
 import React from 'react';
 import { Typography } from '@mui/material';
 import { withAuth } from '@/app/contexts/AuthContext';
-import StudentLayout from './StudentLayout';
+import StudentLayout from '../components/StudentLayout';
 
 const StudentDashboard: React.FC = () => {
   return (

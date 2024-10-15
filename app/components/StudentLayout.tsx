@@ -24,11 +24,11 @@ const StudentLayout: React.FC<StudentLayoutProps> = ({ children }) => {
 
   const menuItems = [
     { text: 'Dashboard', icon: <DashboardIcon />, path: '/student' },
-    { text: 'Study Materials', icon: <BookIcon />, path: '/student/study-materials' },
-    { text: 'Take Quiz', icon: <QuizIcon />, path: '/student/take-quiz' },
-    { text: 'Ask for Guidance', icon: <HelpIcon />, path: '/student/ask-guidance' },
-    { text: 'Ask Any Question', icon: <QuestionIcon />, path: '/student/ask-question' },
-    { text: 'Lecture Notes', icon: <LectureNotesIcon />, path: '/student/lecture-notes' },
+    { text: 'Study Materials', icon: <BookIcon />, path: '/student/StudyMaterial' },
+    { text: 'Take Quiz', icon: <QuizIcon />, path: '/student/TakeQuiz' },
+    { text: 'Ask for Guidance', icon: <HelpIcon />, path: '/student/AskForGuidance' },
+    { text: 'Ask Any Question', icon: <QuestionIcon />, path: '/student/AskQuestion' },
+    { text: 'Lecture Notes', icon: <LectureNotesIcon />, path: '/student/LectureNotes' },
   ];
 
   return (
