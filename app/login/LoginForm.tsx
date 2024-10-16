@@ -18,11 +18,10 @@ const LoginForm: React.FC = () => {
     try {
       const response = await login(username, password);
       setUser({ token: response.access_token, role: response.role });
-      // Redirect based on role
       if (response.role === 'teacher') {
-        router.push('/teacher');  // Changed from '/teacher/dashboard' to '/teacher'
+        router.push('/teacher');
       } else if (response.role === 'student') {
-        router.push('/student');  // Assuming you have a student page as well
+        router.push('/student');
       }
     } catch (error) {
       setError('Invalid username or password');
@@ -43,6 +42,13 @@ const LoginForm: React.FC = () => {
         autoFocus
         value={username}
         onChange={(e) => setUsername(e.target.value)}
+        sx={{
+          '& .MuiOutlinedInput-root': {
+            '&:hover fieldset': {
+              borderColor: 'primary.main',
+            },
+          },
+        }}
       />
       <TextField
         margin="normal"
@@ -55,17 +61,31 @@ const LoginForm: React.FC = () => {
         autoComplete="current-password"
         value={password}
         onChange={(e) => setPassword(e.target.value)}
+        sx={{
+          '& .MuiOutlinedInput-root': {
+            '&:hover fieldset': {
+              borderColor: 'primary.main',
+            },
+          },
+        }}
       />
       <Button
         type="submit"
         fullWidth
         variant="contained"
-        sx={{ mt: 3, mb: 2 }}
+        sx={{
+          mt: 3,
+          mb: 2,
+          backgroundColor: 'primary.main',
+          '&:hover': {
+            backgroundColor: 'primary.dark',
+          },
+        }}
       >
         Sign In
       </Button>
       {error && (
-        <Typography color="error" align="center">
+        <Typography color="error" align="center" sx={{ mt: 2 }}>
           {error}
         </Typography>
       )}

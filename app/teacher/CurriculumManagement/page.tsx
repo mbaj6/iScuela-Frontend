@@ -25,10 +25,18 @@ export default function CurriculumManagement() {
     }
   };
 
-  const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
+  const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    const formData = new FormData(event.currentTarget);
+    
+    // Use type assertion here
+    console.log("Form data:");
+    for (let [key, value] of Array.from(formData.entries())) {
+      console.log(key, value);
+    }
+
     try {
-      const response = await initializeChapter(chapterName, chapterContent);
+      const response = await initializeChapter(formData);
       setMessage(response.message);
       setOpenSnackbar(true);
       setChapterName('');
@@ -37,7 +45,7 @@ export default function CurriculumManagement() {
     } catch (error) {
       setMessage('Failed to initialize chapter. Please try again.');
       setOpenSnackbar(true);
-      console.error('Error:', error);
+      console.error('Error initializing chapter:', error);
     }
   };
 

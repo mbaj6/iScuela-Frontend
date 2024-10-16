@@ -77,9 +77,16 @@ export async function registerUser(username: string, password: string, userType:
   }
 }
 
-export const initializeChapter = async (chapterName: string, chapterContent: string): Promise<ChapterResponse> => {
+export const initializeChapter = async (formData: FormData): Promise<any> => {
   try {
-    const response = await api.post<ChapterResponse>('/api/upload-chapter', { title: chapterName, content: chapterContent });
+    // Add this line for debugging
+    console.log("Sending data:", Object.fromEntries(formData));
+
+    const response = await api.post('/api/initialize-chapter', formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    });
     return response.data;
   } catch (error) {
     console.error('Error initializing chapter:', error);
