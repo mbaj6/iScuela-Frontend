@@ -3,14 +3,18 @@
 import React, { useState, FormEvent, useEffect } from 'react';
 import { Typography, TextField, Button, Paper, Box, Container, Snackbar, List, ListItem } from '@mui/material';
 import TeacherLayout from '../TeacherLayout';
-import { initializeChapter, getChapters } from '@/app/utils/api';
+import { getChapters, addChapter } from '@/app/utils/api';
+
+interface Chapter {
+  id: number;
+  title: string;
+}
 
 export default function CurriculumManagement() {
-  const [chapterName, setChapterName] = useState('');
+  const [chapters, setChapters] = useState<Chapter[]>([]);
+  const [chapterTitle, setChapterTitle] = useState('');
   const [chapterContent, setChapterContent] = useState('');
   const [message, setMessage] = useState('');
-  const [openSnackbar, setOpenSnackbar] = useState(false);
-  const [chapters, setChapters] = useState<string[]>([]);
 
   useEffect(() => {
     fetchChapters();
@@ -19,34 +23,34 @@ export default function CurriculumManagement() {
   const fetchChapters = async () => {
     try {
       const fetchedChapters = await getChapters();
-      setChapters(fetchedChapters.map(chapter => chapter.title));
+      console.log('Fetched chapters:', fetchedChapters); // Debug log
+      setChapters(fetchedChapters);
     } catch (error) {
       console.error('Error fetching chapters:', error);
+      setMessage('Failed to fetch chapters');
     }
   };
 
-  const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
-    const formData = new FormData(event.currentTarget);
-    
-    // Use type assertion here
-    console.log("Form data:");
-    for (let [key, value] of Array.from(formData.entries())) {
-      console.log(key, value);
-    }
-
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
     try {
-      const response = await initializeChapter(formData);
+      const response = await addChapter(chapterTitle, chapterContent);
+      console.log('Add chapter response:', response); // Debug log
       setMessage(response.message);
-      setOpenSnackbar(true);
-      setChapterName('');
+      setChapters(response.chapters);
+      setChapterTitle('');
       setChapterContent('');
-      await fetchChapters();  // Fetch updated chapters after successful upload
     } catch (error) {
-      setMessage('Failed to initialize chapter. Please try again.');
-      setOpenSnackbar(true);
-      console.error('Error initializing chapter:', error);
+      console.error('Error:', error);
+      setMessage('An error occurred while adding the chapter');
     }
+  };
+
+  const renderChapter = (chapter: Chapter | string) => {
+    if (typeof chapter === 'string') {
+      return <li key={chapter}>{chapter}</li>;
+    }
+    return <li key={chapter.id}>{chapter.title}</li>;
   };
 
   return (
@@ -61,11 +65,11 @@ export default function CurriculumManagement() {
               margin="normal"
               required
               fullWidth
-              id="chapterName"
-              label="Chapter Name"
-              name="chapterName"
-              value={chapterName}
-              onChange={(e) => setChapterName(e.target.value)}
+              id="chapterTitle"
+              label="Chapter Title"
+              name="chapterTitle"
+              value={chapterTitle}
+              onChange={(e) => setChapterTitle(e.target.value)}
             />
             <TextField
               margin="normal"
@@ -94,16 +98,16 @@ export default function CurriculumManagement() {
             Uploaded Chapters
           </Typography>
           <List>
-            {chapters.map((chapter, index) => (
-              <ListItem key={index}>{chapter}</ListItem>
+            {chapters.map((chapter) => (
+              <ListItem key={chapter.id}>{chapter.title}</ListItem>
             ))}
           </List>
         </Paper>
       </Container>
       <Snackbar
-        open={openSnackbar}
+        open={!!message}
         autoHideDuration={6000}
-        onClose={() => setOpenSnackbar(false)}
+        onClose={() => setMessage('')}
         message={message}
       />
     </TeacherLayout>

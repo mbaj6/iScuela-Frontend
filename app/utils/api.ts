@@ -94,10 +94,25 @@ export const initializeChapter = async (formData: FormData): Promise<any> => {
   }
 };
 
-export const getChapters = async (): Promise<{ id: number; title: string }[]> => {
+export const getChapters = async (): Promise<Chapter[]> => {
   try {
-    const response = await api.get<{ id: number; title: string }[]>('/api/chapters');
-    return response.data;
+    const response = await fetch('/api/chapters');
+    if (!response.ok) {
+      throw new Error('Failed to fetch chapters');
+    }
+    const data = await response.json();
+    console.log('Raw chapter data:', data); // Debug log
+    
+    // Ensure we always return an array of Chapter objects
+    if (Array.isArray(data)) {
+      return data.map((item: string | Chapter, index: number) => {
+        if (typeof item === 'string') {
+          return { id: index + 1, title: item };
+        }
+        return item as Chapter;
+      });
+    }
+    return [];
   } catch (error) {
     console.error('Error fetching chapters:', error);
     return [];
@@ -417,5 +432,45 @@ export const uploadLecture = async (data: FormData | { video_url: string }): Pro
     } else {
       throw new Error('An unexpected error occurred');
     }
+  }
+};
+
+interface AddChapterResponse {
+  message: string;
+  chapters: Chapter[];
+}
+
+export const addChapter = async (title: string, content: string): Promise<AddChapterResponse> => {
+  try {
+    const response = await fetch('/api/add-chapter', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ title, content }),
+    });
+
+    if (!response.ok) {
+      throw new Error('Failed to add chapter');
+    }
+
+    const data = await response.json();
+    console.log('Raw add chapter response:', data); // Debug log
+
+    // Ensure we return the correct structure
+    return {
+      message: data.message || 'Chapter added successfully',
+      chapters: Array.isArray(data.chapters) 
+        ? data.chapters.map((item: string | Chapter, index: number) => {
+            if (typeof item === 'string') {
+              return { id: index + 1, title: item };
+            }
+            return item as Chapter;
+          })
+        : [],
+    };
+  } catch (error) {
+    console.error('Error adding chapter:', error);
+    throw error;
   }
 };
