@@ -104,27 +104,29 @@ export const getChapters = async (): Promise<{ id: number; title: string }[]> =>
   }
 };
 
-export const generateLessonPlan = async (chapter: string, customTopic: string, duration: number): Promise<LessonPlanResponse> => {
-  try {
-    const response = await fetch(`${API_BASE_URL}/api/generate-lesson-plan`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ chapter, custom_topic: customTopic, duration }),
-    });
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
-    }
-    const data = await response.json();
-    if (typeof data.lesson_plan !== 'string') {
-      throw new Error('Unexpected response format');
-    }
-    return data;
-  } catch (error) {
-    console.error('Error generating lesson plan:', error);
-    throw error;
+export const generateLessonPlan = async (data: {
+  chapterName?: string;
+  customTopic?: string;
+  duration: number;
+}) => {
+  console.log('generateLessonPlan called with data:', JSON.stringify(data));
+  const response = await fetch('/api/generate-lesson-plan', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(data),
+  });
+
+  console.log('Response status:', response.status);
+  const responseData = await response.json();
+  console.log('Response data:', JSON.stringify(responseData));
+
+  if (!response.ok) {
+    throw new Error(responseData.error || 'Failed to generate lesson plan');
   }
+
+  return responseData;
 };
 
 export const generateDocument = async (

@@ -45,15 +45,27 @@ export default function LessonPlanGenerator() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!chapter && !customTopic) {
+      setMessage('Please select a chapter or enter a custom topic.');
+      setOpenSnackbar(true);
+      return;
+    }
     try {
-      const response = await generateLessonPlan(chapter, customTopic, parseInt(duration));
+      const requestData = {
+        chapterName: chapter || undefined,
+        customTopic: customTopic || undefined,
+        duration: Number(duration),
+      };
+      console.log('Sending request with data:', JSON.stringify(requestData));
+      const response = await generateLessonPlan(requestData);
+      console.log('Received response:', JSON.stringify(response));
       setLessonPlan(response.lesson_plan);
       setMessage('Lesson plan generated successfully!');
       setOpenSnackbar(true);
     } catch (error) {
-      setMessage('Failed to generate lesson plan. Please try again.');
+      console.error('Error generating lesson plan:', error);
+      setMessage(error instanceof Error ? error.message : 'Failed to generate lesson plan. Please try again.');
       setOpenSnackbar(true);
-      console.error('Error:', error);
     }
   };
 
