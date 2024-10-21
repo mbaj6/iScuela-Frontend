@@ -181,18 +181,44 @@ export const exportLessonPlan = async (lessonPlan: string, format: 'docx' | 'pdf
   }
 };
 
-export const generateQuiz = async (
-  params: {
-    text?: string;
-    chapter?: string;
-    customTopic?: string;
-    numQuestions?: number;
-    gradeLevel?: string;
-  }
-): Promise<any> => {
+interface QuizQuestion {
+  question: string;
+  options: string[];
+  correctAnswer: string;
+}
+
+interface Quiz {
+  questions: QuizQuestion[];
+}
+
+interface GenerateQuizResponse {
+  quiz: Quiz;
+}
+
+export const generateQuiz = async (params: {
+  chapter?: string;
+  customTopic?: string;
+  numQuestions: number;
+  gradeLevel?: string;
+}): Promise<any> => {
+  console.log('Sending quiz generation request with params:', params);
   try {
-    const response = await api.post('/api/generate-quiz', params);
-    return response.data;
+    const response = await fetch(`${API_BASE_URL}/api/create-quiz`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(params),
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.error || `HTTP error! status: ${response.status}`);
+    }
+
+    const data = await response.json();
+    console.log('Received quiz data:', data);
+    return data;
   } catch (error) {
     console.error('Error generating quiz:', error);
     throw error;
