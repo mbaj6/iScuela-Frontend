@@ -353,8 +353,33 @@ export const generateMCQs = async (notes: string, numQuestions: number): Promise
     throw new Error(`HTTP error! status: ${response.status}`);
   }
 
+
   return await response.json();
 };
+
+export const generateQuizFromLectureNotes = async (text: string): Promise<any> => {
+  console.log('Generating quiz from lecture notes');
+  try {
+    const response = await fetch(`${API_BASE_URL}/api/create-quiz`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ text }),
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.error || `HTTP error! status: ${response.status}`);
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error('Error generating quiz:', error);
+    throw error;
+  }
+};
+
 
 export const getStudyMaterials = async (): Promise<StudyMaterial[]> => {
   const response = await fetch(`${API_BASE_URL}/api/study-materials`, {
