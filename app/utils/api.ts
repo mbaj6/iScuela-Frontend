@@ -94,28 +94,16 @@ export const initializeChapter = async (formData: FormData): Promise<any> => {
   }
 };
 
-export const getChapters = async (): Promise<Chapter[]> => {
+export const getChapters = async (): Promise<{ id: number; title: string }[]> => {
   try {
-    const response = await fetch('/api/chapters');
+    const response = await fetch(`${API_BASE_URL}/api/chapters`);
     if (!response.ok) {
       throw new Error('Failed to fetch chapters');
     }
-    const data = await response.json();
-    console.log('Raw chapter data:', data); // Debug log
-    
-    // Ensure we always return an array of Chapter objects
-    if (Array.isArray(data)) {
-      return data.map((item: string | Chapter, index: number) => {
-        if (typeof item === 'string') {
-          return { id: index + 1, title: item };
-        }
-        return item as Chapter;
-      });
-    }
-    return [];
+    return await response.json();
   } catch (error) {
     console.error('Error fetching chapters:', error);
-    return [];
+    throw error;
   }
 };
 
@@ -525,3 +513,26 @@ export const addChapter = async (title: string, content: string): Promise<AddCha
     throw error;
   }
 };
+
+export const generatePowerPoint = async (topic: string, content?: string): Promise<Blob> => {
+  try {
+    const response = await fetch(`${API_BASE_URL}/api/generate-powerpoint`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ topic, content }),
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.error || `HTTP error! status: ${response.status}`);
+    }
+
+    return await response.blob();
+  } catch (error) {
+    console.error('Error generating PowerPoint:', error);
+    throw error;
+  }
+};
+
